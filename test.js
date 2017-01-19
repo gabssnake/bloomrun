@@ -539,3 +539,17 @@ test('depth indexing preserves insertion order for same pattern', function (t) {
     payloadTwo
   ])
 })
+
+test('patterns with nested objects are supported', function (t) {
+  t.plan(3)
+
+  var instance = bloomrun()
+  var pattern = { group: '123', nested: { another: 'value' } }
+  instance.add(pattern, 'found me!')
+
+  t.deepEqual(instance.lookup(pattern), 'found me!')
+  t.deepEqual(instance.list(pattern), ['found me!'])
+
+  instance.remove(pattern, 'found me!')
+  t.deepEqual(instance.lookup(pattern), null)
+})

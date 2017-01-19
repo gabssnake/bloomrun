@@ -35,20 +35,18 @@ Bloomrun.prototype.add = function (pattern, payload) {
 
   for (var key in pattern) {
     if (pattern.hasOwnProperty(key)) {
-      if (typeof pattern[key] !== 'object') {
-        if (!this._tree[key]) {
-          this._tree[key] = {}
-        }
-        bucket = this._tree[key][pattern[key]]
-
-        if (!bucket) {
-          bucket = new Bucket(this)
-          this._buckets.push(bucket)
-          this._tree[key][pattern[key]] = bucket
-        }
-
-        bucket.add(patternSet)
+      if (!this._tree[key]) {
+        this._tree[key] = {}
       }
+      bucket = this._tree[key][pattern[key]]
+
+      if (!bucket) {
+        bucket = new Bucket(this)
+        this._buckets.push(bucket)
+        this._tree[key][pattern[key]] = bucket
+      }
+
+      bucket.add(patternSet)
     }
   }
 
@@ -79,16 +77,14 @@ Bloomrun.prototype.remove = function (pattern, payload) {
 
   for (var key in pattern) {
     if (pattern.hasOwnProperty(key)) {
-      if (typeof pattern[key] !== 'object') {
-        if (this._tree[key] && this._tree[key][pattern[key]]) {
-          bucket = this._tree[key][pattern[key]]
+      if (this._tree[key] && this._tree[key][pattern[key]]) {
+        bucket = this._tree[key][pattern[key]]
 
-          if (bucket.remove(pattern, payload)) {
-            removeBucket(this._buckets, bucket)
-            bucket.forEach(addPatternSet, this)
-            if (bucket.data.length === 0) {
-              delete this._tree[key][pattern[key]]
-            }
+        if (bucket.remove(pattern, payload)) {
+          removeBucket(this._buckets, bucket)
+          bucket.forEach(addPatternSet, this)
+          if (bucket.data.length === 0) {
+            delete this._tree[key][pattern[key]]
           }
         }
       }
