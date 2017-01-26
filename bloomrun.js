@@ -59,6 +59,11 @@ BloomRun.prototype.remove = function (pattern, payload) {
   var matches = matchingBuckets(this._buckets, pattern)
   payload = payload || null
 
+  if (onlyRegex(pattern)) {
+    this._regexBucket.remove(pattern, payload)
+    return this
+  }
+
   if (matches.length > 0) {
     for (var i = 0; i < matches.length; i++) {
       var bucket = matches[i]

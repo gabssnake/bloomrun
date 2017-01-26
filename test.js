@@ -551,3 +551,71 @@ test('recursive depth support, no other keys', function (t) {
     some: { key: 'value', a: 'b', c: 'd' }
   }), payloadTwo)
 })
+
+test('preserve insertion order regardless of depth (plain)', function (t) {
+  t.plan(1)
+  var instance = bloomrun()
+
+  instance.add({ some: 'action' }, 1)
+  instance.add({ some: 'action', hello: 'there' }, 2)
+  instance.add({ some: 'action', hello: 'there', friend: 'yes' }, 3)
+  instance.add({ some: 'action' }, 4)
+  instance.add({ some: 'action' }, 5)
+
+  var pattern = { some: 'action', hello: 'there', friend: 'yes', other: 'field' }
+  t.deepEqual(instance.list(pattern), [1, 2, 3, 4, 5])
+})
+
+test('preserve insertion order regardless of depth (nested)', function (t) {
+  t.plan(1)
+  var instance = bloomrun()
+
+  instance.add({ nested: { another: 'value' } }, 1)
+  instance.add({ nested: { another: 'value', heavier: 'here' } }, 2)
+  instance.add({ nested: { another: 'value' } }, 3)
+  instance.add({ nested: { heavier: 'here' } }, 4)
+  instance.add({ nested: { heavier: 'here' } }, 5)
+
+  var pattern = { nested: { another: 'value', heavier: 'here' } }
+  t.deepEqual(instance.list(pattern), [1, 2, 3, 4, 5])
+})
+
+test('preserve depth and then insertion order (plain)', function (t) {
+  t.plan(1)
+  var instance = bloomrun({ indexing: 'depth' })
+
+  instance.add({ some: 'action' }, 1)
+  instance.add({ some: 'action', hello: 'there' }, 2)
+  instance.add({ some: 'action', hello: 'there', friend: 'yes' }, 3)
+  instance.add({ some: 'action' }, 4)
+  instance.add({ some: 'action' }, 5)
+
+  var pattern = { some: 'action', hello: 'there', friend: 'yes', other: 'field' }
+  t.deepEqual(instance.list(pattern), [3, 2, 1, 4, 5])
+})
+
+test('preserve depth and then insertion order (nested)', function (t) {
+  t.plan(1)
+  var instance = bloomrun({ indexing: 'depth' })
+
+  instance.add({ nested: { another: 'value' } }, 1)
+  instance.add({ nested: { another: 'value', heavier: 'here' } }, 2)
+  instance.add({ nested: { another: 'value' } }, 3)
+  instance.add({ nested: { heavier: 'here' } }, 4)
+  instance.add({ nested: { heavier: 'here' } }, 5)
+
+  var pattern = { nested: { another: 'value', heavier: 'here' } }
+  t.deepEqual(instance.list(pattern), [2, 1, 3, 4, 5])
+})
+
+test('removing regex pattern without other keys is supported', function (t) {
+  t.plan(2)
+
+  var instance = bloomrun()
+  var pattern = { to: /.*/ }
+
+  instance.add(pattern)
+  t.deepEqual(instance.lookup({ to: 'you' }), pattern)
+  instance.remove(pattern)
+  t.equal(instance.lookup({ to: 'you' }), null)
+})
