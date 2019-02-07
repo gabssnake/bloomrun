@@ -181,6 +181,25 @@ test('removing regex pattern without other keys is supported', function (t) {
   t.equal(instance.lookup({ to: 'you' }), null)
 })
 
+test('removing regex pattern without other keys is supported - wildcard case', function (t) {
+  t.plan(3)
+
+  var instance = bloomrun()
+  var regExPattern1 = { to: /^[a-zA-Z0-9-.]+$/i }
+  var regExPattern2 = { to: /^[0-9]+$/i }
+
+  instance.add(regExPattern1)
+  instance.add(regExPattern2)
+
+  t.deepEqual(instance.lookup({ to: 'you' }), regExPattern1)
+
+  instance.remove(regExPattern1)
+
+  t.equal(instance.lookup({ to: 'you' }), null)
+  // second pattern should be still there because it doesn't match
+  t.ok(instance.lookup({ to: '123' }))
+})
+
 test('remove deletes all matches', function (t) {
   t.plan(2)
 
@@ -522,20 +541,85 @@ test('issue#46 - pattern is not equals', function (t) {
   t.deepEqual(instance.lookup(pattern2), null)
 })
 
-test('depth indexing preserves insertion order for same pattern', function (t) {
-  t.plan(1)
+test('issue#55 - unexpected behaviour using indexing:depth', function (t) {
+  t.plan(2)
 
   var instance = bloomrun({ indexing: 'depth' })
-  var pattern = { group: '123', another: 'value' }
+  instance.add({ role: 'tag', cmd: 'find' }, 'tag,find')
+  instance.add({ role: 'location', cmd: 'find' }, 'location,find')
 
-  function payloadOne () { }
-  function payloadTwo () { }
+  instance.add({ role: 'tag', cmd: 'find', count: /.*/ }, 'tag,find,count')
+  instance.add({ role: 'location', cmd: 'find', count: /.*/ }, 'location,find,count')
 
-  instance.add(pattern, payloadOne)
-  instance.add(pattern, payloadTwo)
+  t.deepEqual(instance.lookup({ role: 'location', cmd: 'find', count: 'true' }), 'location,find,count')
+  t.deepEqual(instance.lookup({ role: 'location', cmd: 'find' }), 'location,find')
+})
 
-  t.deepEqual(instance.list({ group: '123', another: 'value' }), [
-    payloadOne,
-    payloadTwo
-  ])
+test('issue#57 - Removing many pattern should not lead to finite recursion', function (t) {
+  t.plan(1)
+
+  var instance = bloomrun()
+  var noop = function () { return 'test' }
+
+  instance.add({ topic: 'math', cmd: 'add1' }, noop)
+  instance.add({ topic: 'math', cmd: 'add2' }, noop)
+  instance.add({ topic: 'math', cmd: 'add3' }, noop)
+  instance.add({ topic: 'math', cmd: 'add4' }, noop)
+  instance.add({ topic: 'math', cmd: 'add5' }, noop)
+  instance.add({ topic: 'math', cmd: 'add6' }, noop)
+  instance.add({ topic: 'math', cmd: 'add7' }, noop)
+  instance.add({ topic: 'math', cmd: 'add8' }, noop)
+  instance.add({ topic: 'math', cmd: 'add9' }, noop)
+  instance.add({ topic: 'math', cmd: 'add10' }, noop)
+  instance.add({ topic: 'math', cmd: 'add11' }, noop)
+  instance.add({ topic: 'math', cmd: 'add12' }, noop)
+  instance.add({ topic: 'math', cmd: 'add13' }, noop)
+  instance.add({ topic: 'math', cmd: 'add14' }, noop)
+  instance.add({ topic: 'math', cmd: 'add15' }, noop)
+  instance.add({ topic: 'math', cmd: 'add16' }, noop)
+  instance.add({ topic: 'math', cmd: 'add17' }, noop)
+
+  instance.list(null, {
+    patterns: true
+  }).forEach(function (element) {
+    instance.remove(element)
+  })
+
+  t.deepEqual(instance.list().length, 0)
+})
+
+test('issue#64 - Add `for of` support for iterator', function (t) {
+  t.plan(3)
+
+  var instance = bloomrun()
+
+  var patterns = [{ hello: 'world', num: 0 }, { hello: 'world', num: 1 }, { hello: 'world', num: 2 }]
+
+  for (var pattern of patterns) {
+    instance.add(pattern)
+  }
+
+  var iterator = instance.iterator()
+
+  var index = 0
+  for (var it of iterator) {
+    t.equal(it, patterns[index++])
+  }
+})
+
+test('`for of` support for main bloomrun object', function (t) {
+  t.plan(3)
+
+  var instance = bloomrun()
+
+  var patterns = [{ hello: 'world', num: 0 }, { hello: 'world', num: 1 }, { hello: 'world', num: 2 }]
+
+  for (var pattern of patterns) {
+    instance.add(pattern)
+  }
+
+  var index = 0
+  for (var it of instance) {
+    t.equal(it, patterns[index++])
+  }
 })

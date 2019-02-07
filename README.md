@@ -77,7 +77,12 @@ Options are:
   if set to `depth`, it will try to match entries with the most
   properties first. Depth indexing is guaranteed if the patterns
 overlaps. If multiple matching patterns overlaps it checks on the
-first overlapping group of patterns that matches.
+first overlapping group of patterns that matches. The insertion order of pattern with the same depth is not guaranteed.
+
+`for..of` construct:
+
+The bloomrun instance implements iterable protocol, **all** added patterns can be looped 
+over in a `for..of` construct. 
 
 -------------------------------------------------------
 <a name="add"></a>
@@ -138,6 +143,11 @@ form:
 }
 ```
 
+`for..of` construct:
+
+The iterator also implements iterable protocol, matched patterns can be looped 
+over in a `for..of` construct.
+
 -------------------------------------------------------
 <a name="list"></a>
 ### instance.list(obj [, opts])
@@ -195,7 +205,7 @@ The bloomrun logo was created, with thanks, by [Dean McDonnell](https:/github.co
 
 ## License
 
-Copyright Matteo Collina 2015-2016, Licensed under [MIT][].
+Copyright Matteo Collina 2015-2017, Licensed under [MIT][].
 
 [MIT]: ./LICENSE
 [example]: ./example.js

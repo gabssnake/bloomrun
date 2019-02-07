@@ -85,10 +85,8 @@ Bloomrun.prototype.remove = function (pattern, payload) {
 
           if (bucket.remove(pattern, payload)) {
             removeBucket(this._buckets, bucket)
+            delete this._tree[key][pattern[key]]
             bucket.forEach(addPatternSet, this)
-            if (bucket.data.length === 0) {
-              delete this._tree[key][pattern[key]]
-            }
           }
         }
       }
@@ -152,6 +150,10 @@ Bloomrun.prototype.iterator = function (obj, opts) {
     asMatch = opts.payloads ? patternsAndPayloads : onlyPatterns
   }
   return new Iterator(this, obj, asMatch)
+}
+
+Bloomrun.prototype[Symbol.iterator] = function () {
+  return this.iterator()[Symbol.iterator]()
 }
 
 module.exports = Bloomrun
